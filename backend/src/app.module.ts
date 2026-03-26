@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bull';
 import { envConfig } from './config/env.config';
+
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -17,6 +18,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 import { N8nModule } from './modules/n8n/n8n.module';
 import { LoggerModule } from './logger/logger.module';
+
 import { HealthController } from './health.controller';
 
 @Module({
@@ -25,35 +27,23 @@ import { HealthController } from './health.controller';
       isGlobal: true,
       load: [envConfig],
     }),
+
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
         limit: 60,
       },
     ]),
+
+    // ✅ FIXED Redis config
     BullModule.forRootAsync({
-  useFactory: () => ({
-    redis: {
-      url: process.env.REDIS_URL,
-    },
-  }),
-}),
-        console.log(`[Bull] Connecting to Redis at ${host}:${port}`);
-        return {
-          redis: {
-            host,
-            port,
-            maxRetriesPerRequest: 3,
-            enableReadyCheck: false,
-            retryStrategy: (times: number) => {
-              console.log(`[Bull] Redis retry attempt ${times}`);
-              if (times > 5) return null;
-              return Math.min(times * 1000, 3000);
-            },
-          },
-        };
-      },
+      useFactory: () => ({
+        redis: {
+          url: process.env.REDIS_URL,
+        },
+      }),
     }),
+
     LoggerModule,
     PrismaModule,
     AuthModule,
@@ -69,6 +59,7 @@ import { HealthController } from './health.controller';
     ApiKeysModule,
     N8nModule,
   ],
+
   controllers: [HealthController],
 })
 export class AppModule {}
