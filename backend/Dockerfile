@@ -21,4 +21,4 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/prisma ./prisma
 
 EXPOSE ${PORT:-4000}
-CMD ["sh", "-c", "npx prisma migrate deploy && echo 'Starting NestJS app...' && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy; echo '=== Migration done, starting app ==='; echo \"PORT=$PORT REDIS_HOST=$REDIS_HOST REDIS_PORT=$REDIS_PORT\"; node dist/main 2>&1 || echo 'APP CRASHED WITH EXIT CODE '$?"]
