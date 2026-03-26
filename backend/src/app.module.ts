@@ -36,8 +36,13 @@ import { HealthController } from './health.controller';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         redis: {
-          host: config.get<string>('redis.host'),
-          port: config.get<number>('redis.port'),
+          host: config.get<string>('redis.host') || 'localhost',
+          port: config.get<number>('redis.port') || 6379,
+          maxRetriesPerRequest: 3,
+          retryStrategy: (times: number) => {
+            if (times > 3) return null;
+            return Math.min(times * 500, 2000);
+          },
         },
       }),
     }),
