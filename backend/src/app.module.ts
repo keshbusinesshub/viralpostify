@@ -32,11 +32,12 @@ import { HealthController } from './health.controller';
       },
     ]),
     BullModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
-        const host = config.get<string>('redis.host') || 'localhost';
-        const port = config.get<number>('redis.port') || 6379;
+  useFactory: () => ({
+    redis: {
+      url: process.env.REDIS_URL,
+    },
+  }),
+}),
         console.log(`[Bull] Connecting to Redis at ${host}:${port}`);
         return {
           redis: {
