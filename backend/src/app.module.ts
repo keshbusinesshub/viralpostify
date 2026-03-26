@@ -34,17 +34,24 @@ import { HealthController } from './health.controller';
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        redis: {
-          host: config.get<string>('redis.host') || 'localhost',
-          port: config.get<number>('redis.port') || 6379,
-          maxRetriesPerRequest: 3,
-          retryStrategy: (times: number) => {
-            if (times > 3) return null;
-            return Math.min(times * 500, 2000);
+      useFactory: (config: ConfigService) => {
+        const host = config.get<string>('redis.host') || 'localhost';
+        const port = config.get<number>('redis.port') || 6379;
+        console.log(`[Bull] Connecting to Redis at ${host}:${port}`);
+        return {
+          redis: {
+            host,
+            port,
+            maxRetriesPerRequest: 3,
+            enableReadyCheck: false,
+            retryStrategy: (times: number) => {
+              console.log(`[Bull] Redis retry attempt ${times}`);
+              if (times > 5) return null;
+              return Math.min(times * 1000, 3000);
+            },
           },
-        },
-      }),
+        };
+      },
     }),
     LoggerModule,
     PrismaModule,
