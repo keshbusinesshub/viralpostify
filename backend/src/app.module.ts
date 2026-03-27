@@ -36,13 +36,15 @@ import { HealthController } from './health.controller';
     ]),
 
     // ✅ FIXED Redis config
-    BullModule.forRootAsync({
-      useFactory: () => ({
-        redis: {
-          url: process.env.REDIS_URL,
-        },
+  BullModule.forRootAsync({
+  useFactory: () => ({
+    redis: {
+      host: process.env.REDISHOST,
+      port: Number(process.env.REDISPORT),
+      password: process.env.REDISPASSWORD,
+          },
       }),
-    }),
+  }),
 
     LoggerModule,
     PrismaModule,
