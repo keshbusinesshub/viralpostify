@@ -33,7 +33,8 @@ async function bootstrap() {
     credentials: true,
   });
 
-  const port = process.env.PORT || process.env.BACKEND_PORT || 4000;
+  const port = process.env.PORT;
+  await app.init();
   await app.listen(port, '0.0.0.0');
   logger.log(`Backend running on http://0.0.0.0:${port}`, 'Bootstrap');
 }
