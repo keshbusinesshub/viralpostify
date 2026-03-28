@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bull';
-import IORedis from 'ioredis';
+import { Redis as IORedis } from 'ioredis';
 import { envConfig } from './config/env.config';
 
 import { PrismaModule } from './prisma/prisma.module';
