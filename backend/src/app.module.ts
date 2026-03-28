@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bull';
+import IORedis from 'ioredis';
 import { envConfig } from './config/env.config';
 
 import { PrismaModule } from './prisma/prisma.module';
@@ -21,6 +22,43 @@ import { LoggerModule } from './logger/logger.module';
 
 import { HealthController } from './health.controller';
 
+function createRedisClient(): IORedis {
+  const redisUrl = process.env.REDIS_URL;
+
+  let client: IORedis;
+  if (redisUrl) {
+    console.log('[Bull] Connecting to Redis via REDIS_URL');
+    client = new IORedis(redisUrl, {
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+    });
+  } else {
+    const host = process.env.REDISHOST || process.env.REDIS_HOST || 'localhost';
+    const port = Number(process.env.REDISPORT || process.env.REDIS_PORT) || 6379;
+    const password = process.env.REDISPASSWORD || undefined;
+    console.log(`[Bull] Connecting to Redis at ${host}:${port}`);
+    client = new IORedis({
+      host,
+      port,
+      password,
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      retryStrategy: (times: number) => {
+        console.log(`[Bull] Redis retry ${times}`);
+        if (times > 3) return null;
+        return Math.min(times * 1000, 3000);
+      },
+    });
+  }
+
+  // Prevent unhandled error events from crashing the process
+  client.on('error', (err: Error) => {
+    console.error('[Bull] Redis client error:', err.message);
+  });
+
+  return client;
+}
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -35,37 +73,8 @@ import { HealthController } from './health.controller';
       },
     ]),
 
-    BullModule.forRootAsync({
-      useFactory: () => {
-        const redisUrl = process.env.REDIS_URL;
-        if (redisUrl) {
-          console.log('[Bull] Connecting to Redis via REDIS_URL');
-          return { redis: redisUrl };
-        }
-
-        const host = process.env.REDISHOST || process.env.REDIS_HOST || 'localhost';
-        const port = Number(process.env.REDISPORT || process.env.REDIS_PORT) || 6379;
-        const password = process.env.REDISPASSWORD || undefined;
-        console.log(`[Bull] Connecting to Redis at ${host}:${port}`);
-        return {
-          redis: {
-            host,
-            port,
-            password,
-            maxRetriesPerRequest: 3,
-            enableReadyCheck: false,
-            lazyConnect: true,
-            retryStrategy: (times: number) => {
-              console.log(`[Bull] Redis retry attempt ${times}`);
-              if (times > 3) {
-                console.log('[Bull] Redis unavailable, giving up');
-                return null;
-              }
-              return Math.min(times * 1000, 3000);
-            },
-          },
-        };
-      },
+    BullModule.forRoot({
+      createClient: () => createRedisClient(),
     }),
 
     LoggerModule,
