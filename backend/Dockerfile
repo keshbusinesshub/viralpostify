@@ -8,7 +8,6 @@ COPY prisma ./prisma/
 
 RUN npm install
 
-# 🔥 IMPORTANT
 RUN npx prisma generate
 
 COPY . .
@@ -24,9 +23,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-# 🔥 IMPORTANT AGAIN
 RUN npx prisma generate
 
 EXPOSE 3000
 
-CMD ["node", "dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]

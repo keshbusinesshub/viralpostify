@@ -35,16 +35,38 @@ import { HealthController } from './health.controller';
       },
     ]),
 
-    // ✅ FIXED Redis config
-  BullModule.forRootAsync({
-  useFactory: () => ({
-    redis: {
-      host: process.env.REDISHOST,
-      port: Number(process.env.REDISPORT),
-      password: process.env.REDISPASSWORD,
+    BullModule.forRootAsync({
+      useFactory: () => {
+        const redisUrl = process.env.REDIS_URL;
+        if (redisUrl) {
+          console.log('[Bull] Connecting to Redis via REDIS_URL');
+          return { redis: redisUrl };
+        }
+
+        const host = process.env.REDISHOST || process.env.REDIS_HOST || 'localhost';
+        const port = Number(process.env.REDISPORT || process.env.REDIS_PORT) || 6379;
+        const password = process.env.REDISPASSWORD || undefined;
+        console.log(`[Bull] Connecting to Redis at ${host}:${port}`);
+        return {
+          redis: {
+            host,
+            port,
+            password,
+            maxRetriesPerRequest: 3,
+            enableReadyCheck: false,
+            lazyConnect: true,
+            retryStrategy: (times: number) => {
+              console.log(`[Bull] Redis retry attempt ${times}`);
+              if (times > 3) {
+                console.log('[Bull] Redis unavailable, giving up');
+                return null;
+              }
+              return Math.min(times * 1000, 3000);
+            },
           },
-      }),
-  }),
+        };
+      },
+    }),
 
     LoggerModule,
     PrismaModule,
