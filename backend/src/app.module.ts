@@ -31,6 +31,7 @@ function createRedisClient(): IORedis {
     client = new IORedis(redisUrl, {
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
+      retryStrategy: (times: number) => Math.min(times * 500, 5000),
     });
   } else {
     const host = process.env.REDISHOST || process.env.REDIS_HOST || 'localhost';
@@ -45,8 +46,7 @@ function createRedisClient(): IORedis {
       enableReadyCheck: false,
       retryStrategy: (times: number) => {
         console.log(`[Bull] Redis retry ${times}`);
-        if (times > 3) return null;
-        return Math.min(times * 1000, 3000);
+        return Math.min(times * 500, 5000); // keep retrying, max 5s between attempts
       },
     });
   }

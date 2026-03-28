@@ -4,6 +4,14 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { AppModule } from './app.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
+// Prevent unhandled rejections (e.g. Redis retries) from crashing the process
+process.on('unhandledRejection', (reason: unknown) => {
+  console.error('[Process] Unhandled Rejection:', reason);
+});
+process.on('uncaughtException', (err: Error) => {
+  console.error('[Process] Uncaught Exception:', err.message);
+});
+
 async function bootstrap() {
   console.log('[Bootstrap] Starting NestJS application...');
   console.log(`[Bootstrap] PORT=${process.env.PORT} BACKEND_PORT=${process.env.BACKEND_PORT}`);
