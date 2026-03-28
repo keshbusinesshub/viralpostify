@@ -20,7 +20,8 @@ export class SubscriptionsService {
     private prisma: PrismaService,
     private config: ConfigService,
   ) {
-    this.stripe = new Stripe(this.config.get<string>('stripe.secretKey')!, {
+    const stripeKey = this.config.get<string>('stripe.secretKey') || 'sk_test_placeholder';
+    this.stripe = new Stripe(stripeKey, {
       apiVersion: '2023-10-16',
     });
   }

@@ -9,7 +9,7 @@ export class AiService {
 
   constructor(private config: ConfigService) {
     this.openai = new OpenAI({
-      apiKey: this.config.get<string>('openai.apiKey'),
+      apiKey: this.config.get<string>('openai.apiKey') || 'sk-placeholder',
     });
   }
 

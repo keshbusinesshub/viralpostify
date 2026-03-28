@@ -11,7 +11,8 @@ async function bootstrap() {
   console.log(`[Bootstrap] DATABASE_URL=${process.env.DATABASE_URL ? 'set' : 'not set'}`);
 
   const app = await NestFactory.create(AppModule, {
-    bufferLogs: true,
+    bufferLogs: false,
+    logger: ['error', 'warn', 'log', 'debug'],
   });
 
   // Use Winston as the NestJS logger
